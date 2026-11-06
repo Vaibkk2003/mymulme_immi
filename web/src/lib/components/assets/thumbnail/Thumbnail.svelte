@@ -41,6 +41,7 @@
     showArchiveIcon?: boolean;
     showStackedIcon?: boolean;
     imageClass?: ClassValue;
+    containerClass?: ClassValue;
     brokenAssetClass?: ClassValue;
     albumUsers?: UserResponseDto[];
     onClick?: (asset: TimelineAsset) => void;
@@ -68,6 +69,7 @@
     onSelect = undefined,
     onMouseEvent = undefined,
     imageClass = '',
+    containerClass = '',
     brokenAssetClass = '',
   }: Props = $props();
 
@@ -206,6 +208,7 @@
 <div
   class={[
     'group flex overflow-hidden focus-visible:outline-none',
+    containerClass,
     backgroundColorClass,
     { 'rounded-xl': selected },
     disabled ? 'cursor-not-allowed' : 'cursor-pointer',

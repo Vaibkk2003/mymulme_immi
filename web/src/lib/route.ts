@@ -84,6 +84,7 @@ export const Route = {
 
   // people
   people: () => '/people',
+  myMulMe: () => '/my-mulme',
   viewPerson: ({ id }: { id: string }, params?: { previousRoute?: string; action?: 'merge' }) =>
     `/people/${id}` + asQueryString(params),
 

@@ -173,6 +173,14 @@ export interface FaceEmbeddingSearch extends Omit<SearchEmbeddingOptions, 'userI
   minBirthDate?: Date | null;
 }
 
+export interface AdminFaceSearch {
+  ownerId: string;
+  embedding: string;
+  maxDistance: number;
+  numResults: number;
+  offset: number;
+}
+
 export interface FaceSearchResult {
   distance: number;
   id: string;
@@ -341,6 +349,48 @@ export class SearchRepository {
   })
   async getEmbedding(assetId: string) {
     return this.db.selectFrom('smart_search').selectAll().where('assetId', '=', assetId).executeTakeFirst();
+  }
+
+  @GenerateSql({
+    params: [
+      {
+        ownerId: DummyValue.UUID,
+        embedding: DummyValue.VECTOR,
+        maxDistance: 0.6,
+        numResults: 24,
+        offset: 0,
+      },
+    ],
+  })
+  searchAdminFaces({ ownerId, embedding, maxDistance, numResults, offset }: AdminFaceSearch) {
+    return this.db.transaction().execute(async (trx) => {
+      await sql`set local vchordrq.probes = ${sql.lit(probes[VectorIndex.Face])}`.execute(trx);
+      return trx
+        .with('matches', (qb) =>
+          qb
+            .selectFrom('asset_face')
+            .innerJoin('asset', 'asset.id', 'asset_face.assetId')
+            .innerJoin('face_search', 'face_search.faceId', 'asset_face.id')
+            .select(['asset.id as assetId', 'asset.fileCreatedAt'])
+            .select(sql<number>`face_search.embedding <=> ${embedding}`.as('distance'))
+            .where('asset.ownerId', '=', ownerId)
+            .where('asset.type', '=', AssetType.Image)
+            .where('asset.visibility', '!=', AssetVisibility.Locked)
+            .where('asset.deletedAt', 'is', null)
+            .where('asset_face.deletedAt', 'is', null)
+            .where('asset_face.isVisible', '=', true)
+            .distinctOn('asset.id')
+            .orderBy('asset.id')
+            .orderBy('distance'),
+        )
+        .selectFrom('matches')
+        .selectAll()
+        .where('matches.distance', '<=', maxDistance)
+        .orderBy('matches.distance')
+        .limit(numResults)
+        .offset(offset)
+        .execute();
+    });
   }
 
   @GenerateSql({

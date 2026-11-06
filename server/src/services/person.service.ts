@@ -1,4 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { Insertable } from 'kysely';
 import { isUndefined, omitBy } from 'lodash-es';
 import type { JobItem, JobOf } from 'src/types.js';
@@ -29,7 +32,9 @@ import {
   mapPerson,
   mapPersonUsers,
 } from 'src/dtos/person.dto.js';
+import { MyMulMeMatchResponseDto, MyMulMePageSearchDto } from 'src/dtos/my-mulme.dto.js';
 import {
+  AssetFileType,
   AssetVisibility,
   CacheControl,
   DatabaseLock,
@@ -84,6 +89,84 @@ export class PersonService extends BaseService {
       total,
       hidden,
     };
+  }
+
+  async matchMyMulMe(
+    auth: AuthDto,
+    file: Express.Multer.File,
+    dto: MyMulMePageSearchDto,
+  ): Promise<MyMulMeMatchResponseDto> {
+    const extensions: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const extension = file?.mimetype ? extensions[file.mimetype] : undefined;
+    if (!file?.buffer?.length || !extension || file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('Upload a selfie as a JPEG, PNG, or WebP image under 5 MB');
+    }
+
+    const { machineLearning } = await this.getConfig({ withCache: true });
+    if (!isFacialRecognitionEnabled(machineLearning)) {
+      throw new BadRequestException('Facial recognition is not enabled on this server');
+    }
+
+    const admin = await this.userRepository.getAdmin();
+    if (!admin) {
+      return { items: [], page: dto.page, size: dto.size, hasNextPage: false };
+    }
+
+    const tempDirectory = await mkdtemp(join(tmpdir(), 'immich-mymulme-'));
+    try {
+      const selfiePath = join(tempDirectory, `selfie.${extension}`);
+      await writeFile(selfiePath, file.buffer);
+      const { faces } = await this.machineLearningRepository.detectFaces(selfiePath, machineLearning.facialRecognition);
+      if (faces.length !== 1) {
+        throw new BadRequestException('The selfie must contain exactly one clearly visible face');
+      }
+
+      const matches = await this.searchRepository.searchAdminFaces({
+        ownerId: admin.id,
+        embedding: faces[0].embedding,
+        maxDistance: machineLearning.facialRecognition.maxDistance,
+        numResults: dto.size + 1,
+        offset: (dto.page - 1) * dto.size,
+      });
+      const pageMatches = matches.slice(0, dto.size);
+      const assets = await this.assetRepository.getByIds(pageMatches.map(({ assetId }) => assetId));
+      const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
+
+      const items = await Promise.all(
+        pageMatches.map(async ({ assetId }) => {
+          const asset = assetsById.get(assetId);
+          if (!asset) {
+            return null;
+          }
+
+          const { path } = await this.assetRepository.getForThumbnail(assetId, AssetFileType.Thumbnail, false);
+          if (!path || !this.storageRepository.existsSync(path)) {
+            return null;
+          }
+
+          const thumbnail = await readFile(path);
+          const contentType = mimeTypes.lookup(path) || 'image/jpeg';
+          return {
+            assetId,
+            fileCreatedAt: asset.fileCreatedAt.toISOString(),
+            thumbnail: `data:${contentType};base64,${thumbnail.toString('base64')}`,
+          };
+        }),
+      );
+
+      return {
+        items: items.filter((item) => item !== null),
+        page: dto.page,
+        size: dto.size,
+        hasNextPage: matches.length > dto.size,
+      };
+    } finally {
+      await rm(tempDirectory, { recursive: true, force: true });
+    }
   }
 
   async reassignFaces(auth: AuthDto, personGroupId: string, dto: AssetFaceUpdateDto): Promise<PersonResponseDto[]> {

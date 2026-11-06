@@ -2114,6 +2114,24 @@ export type MergePersonDto = {
     /** Person IDs to merge */
     ids: string[];
 };
+export type MyMulMeMatchUploadDto = {
+    /** A live selfie captured for matching */
+    file: Blob;
+};
+export type MyMulMeMatchAssetDto = {
+    /** Matched admin library asset ID */
+    assetId: string;
+    /** Asset capture date */
+    fileCreatedAt: string;
+    /** Temporary thumbnail data URL */
+    thumbnail: string;
+};
+export type MyMulMeMatchResponseDto = {
+    hasNextPage: boolean;
+    items: MyMulMeMatchAssetDto[];
+    page: number;
+    size: number;
+};
 export type PersonUsersDeleteDto = {
     /** Person ID */
     personId: string;
@@ -6393,6 +6411,26 @@ export function mergePeople({ mergePersonDto }: {
         ...opts,
         method: "POST",
         body: mergePersonDto
+    })));
+}
+/**
+ * Find MyMulMe photo matches
+ */
+export function matchMyMulMe({ page, size, myMulMeMatchUploadDto }: {
+    page?: number;
+    size?: number;
+    myMulMeMatchUploadDto: MyMulMeMatchUploadDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: MyMulMeMatchResponseDto;
+    }>(`/people/my-mulme${QS.query(QS.explode({
+        page,
+        size
+    }))}`, oazapfts.multipart({
+        ...opts,
+        method: "POST",
+        body: myMulMeMatchUploadDto
     })));
 }
 /**

@@ -15,6 +15,7 @@
     mdiArchiveArrowDownOutline,
     mdiCards,
     mdiCardsOutline,
+    mdiCameraOutline,
     mdiFolderOutline,
     mdiHeart,
     mdiHeartOutline,
@@ -72,6 +73,8 @@
   />
 
   <NavbarGroup title={$t('library')} size="tiny" />
+
+  <NavbarItem title={$t('mymulme')} href={Route.myMulMe()} icon={mdiCameraOutline} />
 
   <NavbarItem title={$t('favorites')} href={Route.favorites()} icon={mdiHeartOutline} activeIcon={mdiHeart} />
 

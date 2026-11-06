@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MyMulMeLogo from '#lib/components/MyMulMeLogo.svelte';
   import { goto } from '$app/navigation';
   import { OpenQueryParam } from '#lib/constants.ts';
   import Portal from '#lib/elements/Portal.svelte';
@@ -9,7 +10,7 @@
   import { handleError } from '#lib/utils/handle-error.ts';
   import { getButtonVisibility } from '#lib/utils/purchase-utils.ts';
   import { updateMyPreferences } from '@immich/sdk';
-  import { Button, Icon, IconButton, Logo, modalManager, SupporterBadge } from '@immich/ui';
+  import { Button, Icon, IconButton, modalManager, SupporterBadge } from '@immich/ui';
   import { mdiClose, mdiInformationOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import { SvelteDate } from 'svelte/reactivity';
@@ -90,7 +91,7 @@
     >
       <div class="flex w-full place-content-center place-items-center justify-between">
         <div class="flex place-content-center place-items-center gap-1">
-          <Logo variant="icon" size="tiny" />
+          <MyMulMeLogo variant="icon" size="tiny" />
           <p class="flex font-medium text-primary">
             {$t('purchase_button_buy_immich')}
           </p>
@@ -117,7 +118,7 @@
     >
       <div class="flex place-items-center justify-between">
         <div class="size-10">
-          <Logo variant="icon" size="small" />
+          <MyMulMeLogo variant="icon" size="small" />
         </div>
         <IconButton
           shape="round"

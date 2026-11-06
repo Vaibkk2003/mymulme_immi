@@ -9,11 +9,36 @@ import { defaultTreeAdapter, parse, type DefaultTreeAdapterMap } from 'parse5';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from 'vite';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, createReadStream, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const buildDir = 'build';
 const inlineTags = ['script', 'style'];
+
+const myMulMeVisionAssets = (): Plugin => ({
+  name: 'immich:mymulme-vision-assets',
+  configureServer(server) {
+    server.middlewares.use('/mymulme-assets/mediapipe-wasm', (request, response, next) => {
+      const requestPath = new URL(request.url ?? '', 'http://localhost').pathname;
+      const assetDirectory = path.resolve(import.meta.dirname, 'node_modules/@mediapipe/tasks-vision/wasm');
+      const assetPath = path.resolve(assetDirectory, `.${requestPath}`);
+      if (!assetPath.startsWith(`${assetDirectory}${path.sep}`)) {
+        next();
+        return;
+      }
+
+      const stream = createReadStream(assetPath);
+      stream.on('error', next);
+      response.setHeader('Content-Type', assetPath.endsWith('.wasm') ? 'application/wasm' : 'application/javascript');
+      stream.pipe(response);
+    });
+  },
+  writeBundle(options) {
+    const assetDirectory = path.resolve(import.meta.dirname, 'node_modules/@mediapipe/tasks-vision/wasm');
+    const outputDirectory = path.resolve(options.dir ?? buildDir, 'mymulme-assets/mediapipe-wasm');
+    cpSync(assetDirectory, outputDirectory, { recursive: true });
+  },
+});
 
 const cspManifest = (): Plugin => ({
   name: 'immich:csp-manifest',
@@ -62,6 +87,11 @@ const proxy: Record<string, string | ProxyOptions> = {
   '/.well-known/immich': upstream,
   '/.well-known/webauthn': upstream,
   '/custom.css': upstream,
+  '/mymulme-assets/face-landmarker.task': {
+    target: 'https://storage.googleapis.com',
+    changeOrigin: true,
+    rewrite: () => '/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+  },
 };
 
 dotenv.config({ quiet: true });
@@ -87,6 +117,7 @@ export default defineConfig({
     proxy,
   },
   plugins: [
+    myMulMeVisionAssets(),
     enhancedImages(),
     tailwindcss(),
     sveltekit({

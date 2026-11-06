@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MyMulMeLogo from '#lib/components/MyMulMeLogo.svelte';
   import { goto } from '$app/navigation';
   import type { Action } from '#lib/components/asset-viewer/actions/action.ts';
   import DownloadAction from '#lib/components/timeline/actions/DownloadAction.svelte';
@@ -17,7 +18,7 @@
   import { handleError } from '#lib/utils/handle-error.ts';
   import { toTimelineAsset } from '#lib/utils/timeline-util.ts';
   import { getAssetInfo, type SharedLinkResponseDto } from '@immich/sdk';
-  import { IconButton, Logo, toastManager } from '@immich/ui';
+  import { IconButton, toastManager } from '@immich/ui';
   import { mdiDownload, mdiFileImagePlusOutline, mdiSelectAll } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import ControlAppBar from '../shared-components/ControlAppBar.svelte';
@@ -107,7 +108,7 @@
       <ControlAppBar>
         {#snippet leading()}
           <a data-sveltekit-preload-data="hover" class="ms-4" href="/">
-            <Logo variant={mediaQueryManager.maxMd ? 'icon' : 'inline'} class="min-w-10" />
+            <MyMulMeLogo variant={mediaQueryManager.maxMd ? 'icon' : 'inline'} class="min-w-10" />
           </a>
         {/snippet}
 

@@ -668,6 +668,8 @@
               )}
               {const isAssetDisabled = $derived(timelineManager.albumAssets.has(asset.id))}
               <Thumbnail
+                containerClass="rounded-lg"
+                imageClass="rounded-lg transition-transform duration-200 group-hover:scale-[1.02]"
                 showStackedIcon={withStacked}
                 {showArchiveIcon}
                 {asset}

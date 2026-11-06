@@ -1,7 +1,8 @@
 <script lang="ts">
+  import MyMulMeLogo from '#lib/components/MyMulMeLogo.svelte';
   import { authManager } from '#lib/managers/auth-manager.svelte.ts';
   import { OnboardingRole } from '#lib/types.ts';
-  import { Logo } from '@immich/ui';
+
   import { t } from 'svelte-i18n';
   import { createPreloadedQuery } from '#lib/queries/client.ts';
   import { getServerConfigQuery } from '#lib/queries/server-info.query.ts';
@@ -15,7 +16,7 @@
 </script>
 
 <div class="gap-4">
-  <Logo variant="icon" size="giant" class="mb-2" />
+  <MyMulMeLogo variant="icon" size="giant" class="mb-2" />
   <p class="mb-6 text-6xl font-medium text-primary">
     {$t('onboarding_welcome_user', { values: { user: authManager.user.name } })}
   </p>

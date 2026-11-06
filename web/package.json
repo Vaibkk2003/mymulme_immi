@@ -38,6 +38,7 @@
     "@immich/sdk": "workspace:*",
     "@immich/ui": "^0.91.0",
     "@mdi/js": "^7.4.47",
+    "@mediapipe/tasks-vision": "1.2.2",
     "@noble/hashes": "^2.2.0",
     "@photo-sphere-viewer/core": "^5.14.0",
     "@photo-sphere-viewer/equirectangular-video-adapter": "^5.14.0",

@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Next,
@@ -12,8 +13,11 @@ import {
   Put,
   Query,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { NextFunction, Response } from 'express';
 import type { AuthDto } from 'src/dtos/auth.dto.js';
 import { Endpoint, HistoryBuilder } from 'src/decorators.js';
@@ -35,6 +39,7 @@ import {
   PersonUsersResponseDto,
   PersonUsersSearchDto,
 } from 'src/dtos/person.dto.js';
+import { MyMulMeMatchResponseDto, MyMulMePageSearchDto, MyMulMeMatchUploadDto } from 'src/dtos/my-mulme.dto.js';
 import { ApiTag, Permission } from 'src/enum.js';
 import { Auth, Authenticated, FileResponse } from 'src/middleware/auth.guard.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
@@ -50,6 +55,26 @@ export class PersonController {
     private logger: LoggingRepository,
   ) {
     this.logger.setContext(PersonController.name);
+  }
+
+  @Post('my-mulme')
+  @Authenticated({ permission: Permission.AssetRead })
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ description: 'Capture a selfie to find matching admin library photos', type: MyMulMeMatchUploadDto })
+  @Endpoint({
+    summary: 'Find MyMulMe photo matches',
+    description: 'Temporarily matches a selfie against the administrator photo library and returns thumbnails.',
+    history: new HistoryBuilder().added('v3.4.0').alpha('v3.4.0'),
+  })
+  matchMyMulMe(
+    @Auth() auth: AuthDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Query() dto: MyMulMePageSearchDto,
+  ): Promise<MyMulMeMatchResponseDto> {
+    return this.service.matchMyMulMe(auth, file, dto);
   }
 
   @Get()

@@ -51,6 +51,10 @@
 > [!NOTE]
 > You can find the main documentation, including installation guides, at https://immich.app/.
 
+## MyMulMe custom development fork
+
+This copy includes custom MyMulMe branding and a selfie-based photo-matching portal. For Windows/WSL 2 setup, Docker Compose commands, and MyMulMe notes, see [MYMULME_SETUP.md](MYMULME_SETUP.md). The upstream Immich installation guide below remains the reference for production deployments.
+
 ## Links
 
 - [Documentation](https://docs.immich.app/)

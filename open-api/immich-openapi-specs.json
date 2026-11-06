@@ -10490,6 +10490,88 @@
         "x-immich-state": "Stable"
       }
     },
+    "/people/my-mulme": {
+      "post": {
+        "description": "Temporarily matches a selfie against the administrator photo library and returns thumbnails.",
+        "operationId": "matchMyMulMe",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "default": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "description": "Number of matches to return",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 24,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MyMulMeMatchUploadDto"
+              }
+            }
+          },
+          "description": "Capture a selfie to find matching admin library photos",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyMulMeMatchResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Find MyMulMe photo matches",
+        "tags": [
+          "People"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3.4.0",
+            "state": "Added"
+          },
+          {
+            "version": "v3.4.0",
+            "state": "Alpha"
+          }
+        ],
+        "x-immich-permission": "asset.read",
+        "x-immich-state": "Alpha"
+      }
+    },
     "/people/users": {
       "delete": {
         "description": "Remove user access to people",
@@ -24902,6 +24984,74 @@
         },
         "required": [
           "axis"
+        ],
+        "type": "object"
+      },
+      "MyMulMeMatchAssetDto": {
+        "properties": {
+          "assetId": {
+            "description": "Matched admin library asset ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "fileCreatedAt": {
+            "description": "Asset capture date",
+            "format": "date-time",
+            "type": "string"
+          },
+          "thumbnail": {
+            "description": "Temporary thumbnail data URL",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "fileCreatedAt",
+          "thumbnail"
+        ],
+        "type": "object"
+      },
+      "MyMulMeMatchResponseDto": {
+        "properties": {
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MyMulMeMatchAssetDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "size": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hasNextPage",
+          "items",
+          "page",
+          "size"
+        ],
+        "type": "object"
+      },
+      "MyMulMeMatchUploadDto": {
+        "properties": {
+          "file": {
+            "description": "A live selfie captured for matching",
+            "format": "binary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
         ],
         "type": "object"
       },

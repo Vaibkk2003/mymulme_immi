@@ -252,6 +252,45 @@ from
 where
   "assetId" = $1
 
+-- SearchRepository.searchAdminFaces
+begin
+set
+  local vchordrq.probes = 1
+with
+  "matches" as (
+    select distinct
+      on ("asset"."id") "asset"."id" as "assetId",
+      "asset"."fileCreatedAt",
+      face_search.embedding <=> $1 as "distance"
+    from
+      "asset_face"
+      inner join "asset" on "asset"."id" = "asset_face"."assetId"
+      inner join "face_search" on "face_search"."faceId" = "asset_face"."id"
+    where
+      "asset"."ownerId" = $2
+      and "asset"."type" = $3
+      and "asset"."visibility" != $4
+      and "asset"."deletedAt" is null
+      and "asset_face"."deletedAt" is null
+      and "asset_face"."isVisible" = $5
+    order by
+      "asset"."id",
+      "distance"
+  )
+select
+  *
+from
+  "matches"
+where
+  "matches"."distance" <= $6
+order by
+  "matches"."distance"
+limit
+  $7
+offset
+  $8
+commit
+
 -- SearchRepository.searchFaces
 begin
 set
